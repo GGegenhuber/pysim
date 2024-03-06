@@ -30,11 +30,12 @@ from pySim.utils import h2i, i2h
 class PcscSimLink(LinkBase):
 	""" pySim: PCSC reader transport link."""
 
-	def __init__(self, reader_number:int=0, **kwargs):
+	def __init__(self, reader_number:int=0, protocol=None, **kwargs):
 		super().__init__(**kwargs)
 		r = readers()
 		if reader_number >= len(r):
 			raise ReaderError
+		self._protocol = protocol # CardConnection.T0_protocol || CardConnection.T1_protocol || CardConnection.RAW_protocol
 		self._reader = r[reader_number]
 		self._con = self._reader.createConnection()
 
@@ -60,8 +61,8 @@ class PcscSimLink(LinkBase):
 			# is disconnected
 			self.disconnect()
 
-			# Explicitly select T=0 communication protocol
-			self._con.connect(CardConnection.T0_protocol)
+			# https://github.com/LudovicRousseau/pyscard/blob/master/smartcard/pcsc/PCSCCardConnection.py#L95
+			self._con.connect(protocol = self._protocol)
 		except CardConnectionException:
 			raise ProtocolError()
 		except NoCardException:
